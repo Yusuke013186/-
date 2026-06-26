@@ -69,13 +69,28 @@ fine; just don't omit a figure that exists.
 ### 3. Extract the images
 
 Title page and Visual Abstract are pasted **as-is, full page** (the spec says
-"そのまま" — don't crop these):
+"そのまま" — don't crop these) by default:
 
 ```bash
 python scripts/extract_images.py render paper.pdf work/front/ --dpi 300 --pages 1
 ```
 
 Re-render at 300 DPI for the actual deck (150 DPI was just for inspection).
+
+The reference template's title page happened to be a clean 16:9 slide, so a
+full-bleed paste of the whole page just works. Real paper PDFs are usually
+portrait and far denser (running headers, DOI/copyright footers, multi-column
+abstract text). `add_front_matter_slide` always letterboxes the page
+on a 16:9 slide preserving aspect ratio, so a dense portrait page will paste
+correctly but the title/author block can end up small enough to be illegible,
+and the "Journal Club ●月●日" overlay always sits in a fixed band near the
+bottom — if that band lands on top of existing footer text on a busy page,
+use judgment: re-crop just the masthead/title/author region with
+`extract_images.py crop` instead of the literal full page, so the pasted
+image is legible and leaves clear space for the overlay. Use the full page
+only when, like the reference template, it's already clean enough to read at
+slide size.
+
 Each figure/table gets its own crop, re-rendered straight from the PDF (sharper
 than slicing the page PNG) and auto-trimmed of surrounding whitespace:
 
@@ -143,18 +158,28 @@ schema:
       "heading": "背景",
       "slides": [
         {
+          "subtitle": "シロスタゾールとCAS後の再狭窄",
+          "subtitle_style": "bold",
           "bullets": [
-            {"level": 1, "text": "..."},
-            {"level": 2, "text": "..."}
+            {"level": 1, "text": "頸動脈ステント留置術(CAS)後の**再狭窄**は長期予後を悪化させる", "citation": "Yamagami et al, J Vasc Surg 2018"},
+            {"level": 2, "text": "再狭窄率は報告により5-30%と幅がある"},
+            {"level": 1, "text": "→ 再狭窄予防における薬物療法の意義は明らかでない", "marker": false}
           ],
-          "images": []
+          "box": "CAS後の再狭窄を予防する薬物療法については一定の見解を得られていない."
         }
       ]
     },
     {
       "heading": "結果",
       "slides": [
-        {"bullets": [{"level": 1, "text": "..."}], "images": ["work/figures/figure_1.png"]}
+        {"bullets": [{"level": 1, "text": "..."}], "images": ["work/figures/figure_1.png"]},
+        {
+          "subtitle": "再狭窄率の群間比較",
+          "columns": [
+            {"heading": "シロスタゾール群", "image": "work/figures/fig_a.png", "bullets": [{"level": 2, "text": "12か月再狭窄率 ++8.2%++"}]},
+            {"heading": "標準治療群", "image": "work/figures/fig_b.png", "bullets": [{"level": 2, "text": "12か月再狭窄率 ++15.6%++"}]}
+          ]
+        }
       ]
     }
   ]
@@ -169,12 +194,38 @@ Notes on the schema:
 - `sections` must use exactly the five headings from the table above, in order.
   Omit a section only if the paper genuinely has nothing for it (rare — even
   then, prefer writing at least a one-bullet slide over dropping a heading).
-- Each slide has `bullets` (can be empty) and `images` (can be empty), but not
-  both empty. A slide with both bullets and images splits the slide
-  bullets-on-top / images-below. A slide with only images lays them out in a
-  grid (1 column if there's one image, 2 columns otherwise).
-- All image paths are resolved relative to the JSON file's own directory (or
-  pass absolute paths).
+- Each slide needs at least one of `bullets`, `box`, `images`, `columns`
+  (all optional, all can be combined). `bullets` + `images` (no `columns`)
+  splits the slide bullets-on-top / images-below. `images` alone lays them
+  out in a grid (1 column if there's one image, 2 columns otherwise). For
+  side-by-side image+text or text+text panels (common in 結果/考察), use
+  `columns` instead — it's the general left/right mechanism; if `bullets` is
+  also given alongside `columns` it renders as a short intro line above the
+  column row.
+- `subtitle` (+ optional `subtitle_style: "bold"|"underline"`, default bold)
+  renders a slide-level subtitle line under the header, above the body —
+  use it for a named sub-topic within a section (mirrors the reference
+  template's per-slide subtitles).
+- `bullets[]` items: `level` 1 = "■", 2/3 = "・" at increasing indent, 0 =
+  flush with no marker (for lead-in/plain-paragraph lines). Set
+  `"marker": false` to suppress a level's glyph while keeping its indent —
+  used for "→ ..." conclusion lines. Optional per-bullet `citation` renders
+  a right-aligned, italic, gray reference line directly under that bullet.
+- `box` (string, or list of strings for multiple lines) renders a thin
+  bordered, unfilled takeaway box anchored at the bottom of the slide body —
+  use it for a one-line "bottom line" conclusion, matching the reference
+  template's boxed takeaways on 背景-type slides.
+- `columns[]`: each column is `{"heading"?, "image"?, "bullets"?}` rendered
+  side by side with equal width. A column can mix an image with bullets
+  (image on top, bullets below) or have just one of the two.
+- Inline markup works inside any `text` / `box` / `subtitle` string:
+  `**bold**`, `__underline__`, `++red++` — use red sparingly, for the one
+  number/phrase you'd point at on the projector (matches the reference
+  template's emphasis style).
+- `images` entries may be a plain path string or `{"path", "caption"}` for a
+  small centered caption under that image (e.g. "Table 1. ...").
+- All image paths (including inside `columns[].image`) are resolved relative
+  to the JSON file's own directory, or pass absolute paths.
 - `presenter` and `date_label` default to `堀内裕介` / `●月●日` if omitted —
   ask the user for the real date if they haven't given one, rather than
   leaving the placeholder in a deck that's actually going to be presented.
@@ -198,9 +249,14 @@ then rasterize the PDF). **Check this pipeline actually works in your current
 environment before relying on it** — some sandboxes have only
 `libreoffice-core` installed without the Impress/filter packages, in which
 case `soffice --convert-to pdf` fails on *any* input, not just this one (try
-it on a throwaway one-slide deck first to tell the difference). If a working
-PDF rasterizer isn't available, fall back to the renderer already in this
-skill instead of trying to install one:
+it on a throwaway one-slide deck first to tell the difference). If it fails
+that way, `apt-get install -y libreoffice-impress` and retry before giving up
+on the pipeline. Note the rendering host also needs real Meiryo to fully
+verify Japanese font weight/spacing — without it LibreOffice substitutes a
+fallback CJK font, so use the render to check *layout* (overlap, overflow,
+image sizing, alignment) and trust the spec/XML for font-family correctness.
+If a working PDF rasterizer isn't available at all, fall back to the
+renderer already in this skill instead of trying to install one:
 
 ```bash
 python scripts/extract_images.py render output_as_pdf.pdf work/qa/ --dpi 150
@@ -210,9 +266,10 @@ If visual rendering isn't available at all, do structural QA instead with
 python-pptx: re-open `output.pptx`, walk `slide.shapes`, and confirm each
 shape's `(left, top, width, height)` stays within the slide bounds and that
 text boxes and pictures don't unintentionally overlap (the title slide's
-overlay bar intentionally sits on top of the picture — that one's expected).
-Fix anything found and rebuild; one fix-and-verify pass is normally enough
-unless the fix reveals a new problem.
+overlay text box intentionally sits on top of the picture, and a box's
+border intentionally sits at the bottom edge of the body — those are
+expected). Fix anything found and rebuild; one fix-and-verify pass is
+normally enough unless the fix reveals a new problem.
 
 ## Scripts
 
@@ -222,24 +279,47 @@ unless the fix reveals a new problem.
 - **`scripts/build_pptx.py`** — turns the JSON spec into the final .pptx. Full
   schema is also documented in its module docstring.
 
-## Visual style — defaults in force, pending the real template
+## Visual style — measured against the reference template
 
-This skill was written from a detailed text specification. The reference
-template the user mentioned placing alongside it (精読の例.pdf, i.e. an actual
-example of the target slide design) was **not present** when this skill was
-built, so the constants below are reasonable defaults, not a measured match to
-that file. They all live in one block at the top of `scripts/build_pptx.py` —
-if the real template shows up later, compare against it and tune that block
-rather than restructuring the script:
+These constants were measured directly off `精読の例.pdf` (pixel-sampled
+colors, cropped/zoomed text for weight and placement) rather than guessed from
+the text spec alone. They all live in one block at the top of
+`scripts/build_pptx.py` — if a different reference file shows up later,
+re-render a sample deck (see Visual QA below) and compare side-by-side before
+changing any of this, the same way this set of values was derived:
 
 - 16:9 slides (13.333" × 7.5")
-- Header bar `#3B7D23` green, white bold 26pt text, 0.85" tall
-- Body text dark gray (`#262626`); level-1 bullets 20pt bold, level-2 16pt
-  regular; Meiryo for Japanese glyphs, Calibri for Latin/numerals in the same
-  run
-- Title-slide overlay: a 0.55"-tall green bar across the bottom of the
-  full-bleed title image, with the "Journal Club ●月●日 〈presenter〉" text
-  centered in white bold 16pt
+- Header bar `#3B7D23` green (exact pixel match), 0.75" tall; heading text is
+  a WordArt-style **white fill with a black outline stroke**, bold 28pt —
+  not plain white text. `add_text_outline()` implements the outline by
+  inserting `<a:ln>` before the existing `<a:solidFill>`/`<a:latin>` elements
+  in the run's `rPr`, per OOXML's `CT_TextCharacterProperties` element order.
+- Body text near-black (`#1A1A1A`). Level-1 "■" bullets are **regular
+  weight, not bold** (confirmed by zooming the reference deck — easy to get
+  wrong by assumption). Level-2/3 "・" bullets are smaller (18pt/16pt vs.
+  20pt). Citations are small (13pt), italic, gray, right-aligned under the
+  bullet they support. Inline `++red++` emphasis is exactly `#FF0000`.
+- Meiryo / Meiryo-Bold for Japanese glyphs, Calibri for Latin/numerals — set
+  as separate `a:latin`/`a:ea`/`a:cs` typeface elements on the same run via
+  `set_run_font()`, since python-pptx's public `run.font.name` only sets one
+  typeface for everything, which renders Latin digits/punctuation in the
+  wrong font when mixed into Japanese text.
+- Title-slide overlay is **plain text directly on the page image — no bar or
+  box behind it.** Dark, regular (non-bold) weight, ~26pt, centered
+  horizontally, sitting with a bottom margin (not flush against the slide
+  edge) in whatever blank space the title page leaves. This was the biggest
+  correction versus an earlier, unmeasured draft of this skill, which had
+  wrongly assumed a solid green bar + white bold text here.
+- Subtitle lines under a slide's header are bold by default, or underlined
+  (`subtitle_style: "underline"`) for a secondary look used elsewhere in the
+  deck — both observed in the reference template's 背景/考察 slides.
+- Boxed takeaways (`box` in the JSON spec) are a thin black-outline
+  rectangle with **no fill**, text vertically centered inside.
+- Side-by-side panels (`columns` in the JSON spec) are equal-width, each
+  optionally with a centered bold heading, an image, bullets, or an
+  image+bullets stack — this is how the reference template lays out
+  side-by-side figure comparisons and two-column discussion points.
 
-If the user supplies the actual reference file, re-render a sample deck and
-compare side-by-side before changing these — don't guess a second time.
+None of this needs to be touched to use the skill — it's documented here so
+a future visual tweak has the measurement reasoning instead of starting from
+scratch.
