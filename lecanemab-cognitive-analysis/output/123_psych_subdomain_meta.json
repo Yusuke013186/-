@@ -1,0 +1,9 @@
+{
+  "hd_n_tests": 6,
+  "hd_n_tested": 6,
+  "n_apathy": 12,
+  "n_loo_runs": 66,
+  "n_perm": 1000,
+  "n_perm_runs": 2,
+  "background_finding": "CDR-SB x 意欲低下 (2-B): coef=0.0692, p=0.00176, q=0.0106, LOO robust (33/33, max p=0.0137), permutation p=0.040 (borderline)"
+}
