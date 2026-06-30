@@ -1,0 +1,9 @@
+{
+  "n_tests": 176,
+  "n_tested": 125,
+  "fragile_threshold": 5,
+  "n_perm": 1000,
+  "n_loo_runs": 0,
+  "n_perm_runs": 0,
+  "background": "ALL_PAIRS_SCAN(693検定, MMSE/CDR/MoCA-J混合)では、MMSE下位項目同士の組み合わせでFDR後有意なものは皆無だった(最も近いのはΔ場所見当識×Δ遅延再生でq=0.076)。本解析はMMSE下位項目同士の組み合わせ176検定だけを独立ファミリーとして再補正。"
+}
