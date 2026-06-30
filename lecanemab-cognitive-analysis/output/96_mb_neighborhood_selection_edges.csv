@@ -1,0 +1,37 @@
+﻿変数A,変数B,GraphicalLasso偏相関係数,GraphicalLassoブートストラップ安定性,MB近傍選択_OR規則(全データ),MB近傍選択_AND規則(全データ),MB近傍選択ブートストラップ安定性(OR規則),GraphicalLasso安定エッジ,MB安定エッジ(OR規則),両手法で安定エッジ一致
+CDR-SB,CDR:判断力・問題解決,0.1895192092868489,0.99,True,True,0.954,True,True,True
+CDR-SB,Global CDR,0.4093898092486999,0.986,True,True,0.994,True,True,True
+CDR:判断力・問題解決,CDR:地域社会の活動,0.3227773488265232,0.984,True,True,0.978,True,True,True
+CDR:見当識,MMSE:時間見当識,0.4562893722801007,0.978,True,True,0.982,True,True,True
+CDR-SB,CDR:地域社会の活動,0.2873439886287423,0.976,True,True,0.85,True,True,True
+CDR:判断力・問題解決,MMSE:場所見当識,0.3944166841438719,0.956,True,True,0.984,True,True,True
+CDR-SB,MMSE:時間見当識,0.2334879414052401,0.956,True,True,0.894,True,True,True
+CDR:見当識,MMSE合計,0.2385348964170344,0.942,True,True,0.988,True,True,True
+MMSE合計,MoCA-J合計,0.3423904147071779,0.924,True,True,0.974,True,True,True
+MMSE:時間見当識,MoCA-J合計,0.2588586986007443,0.914,True,True,0.96,True,True,True
+MMSE合計,MMSE:場所見当識,0.3208346917079119,0.91,True,True,0.932,True,True,True
+CDR-SB,MoCA-J合計,0.2740084150384839,0.89,True,True,0.97,True,True,True
+Global CDR,CDR:判断力・問題解決,0.2117252808472198,0.86,True,True,0.89,True,True,True
+CDR:見当識,CDR:地域社会の活動,0.198416985859832,0.834,True,True,0.86,True,True,True
+CDR-SB,MMSE合計,0.2524200433755058,0.794,True,False,0.602,True,False,False
+CDR:地域社会の活動,MoCA-J合計,-0.214698918221887,0.712,True,False,0.824,True,True,True
+MMSE:時間見当識,MMSE:場所見当識,-0.1563574342748707,0.65,True,True,0.91,False,True,False
+CDR:地域社会の活動,MMSE:場所見当識,0.0699337554147296,0.548,True,False,0.716,False,True,False
+Global CDR,MMSE:場所見当識,-0.0744087834614385,0.544,True,True,0.918,False,True,False
+CDR-SB,CDR:見当識,0.0185403833731038,0.522,True,False,0.864,False,True,False
+CDR:判断力・問題解決,MoCA-J合計,-0.0792040831836178,0.472,True,False,0.702,False,True,False
+CDR:見当識,MoCA-J合計,-0.0589312239163167,0.438,True,True,0.854,False,True,False
+Global CDR,CDR:見当識,-0.0332380784199449,0.408,True,False,0.756,False,True,False
+MMSE:場所見当識,MoCA-J合計,0.0014438601490351,0.358,True,True,0.806,False,True,False
+Global CDR,MMSE:時間見当識,-0.0471439937183585,0.348,True,False,0.81,False,True,False
+Global CDR,CDR:地域社会の活動,0.0,0.328,False,False,0.534,False,False,False
+CDR-SB,MMSE:場所見当識,0.0,0.286,True,False,0.558,False,False,False
+Global CDR,MoCA-J合計,0.0,0.266,False,False,0.522,False,False,False
+CDR:見当識,CDR:判断力・問題解決,-0.0112846071358805,0.258,False,False,0.49,False,False,False
+Global CDR,MMSE合計,0.0,0.244,True,False,0.686,False,False,False
+MMSE合計,MMSE:時間見当識,0.0,0.242,False,False,0.292,False,False,False
+CDR:地域社会の活動,MMSE:時間見当識,0.0,0.232,False,False,0.24,False,False,False
+CDR:地域社会の活動,MMSE合計,0.0,0.156,False,False,0.37,False,False,False
+CDR:見当識,MMSE:場所見当識,-0.0,0.138,False,False,0.606,False,False,False
+CDR:判断力・問題解決,MMSE:時間見当識,-0.0111725992466322,0.136,False,False,0.098,False,False,False
+CDR:判断力・問題解決,MMSE合計,-0.0,0.052,False,False,0.19,False,False,False

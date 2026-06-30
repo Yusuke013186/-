@@ -1,0 +1,10 @@
+{
+  "n_subjects": 21,
+  "n_variables": 9,
+  "n_bootstrap": 500,
+  "n_bootstrap_failed": 1,
+  "n_glasso_stable_edges": 16,
+  "n_mb_stable_edges_or_rule": 24,
+  "n_both_methods_stable": 15,
+  "concordance_rate_among_glasso_stable": 0.9375
+}

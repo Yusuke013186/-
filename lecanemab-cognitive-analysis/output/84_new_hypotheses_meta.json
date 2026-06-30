@@ -1,0 +1,18 @@
+{
+  "ha_n_tests": 3,
+  "ha_n_tested": 3,
+  "hb_n_tests": 1,
+  "n_loo_runs": 52,
+  "n_perm": 1000,
+  "n_perm_runs": 2,
+  "cognitive_domains": [
+    "記憶",
+    "見当識",
+    "判断力・問題解決"
+  ],
+  "functional_domains": [
+    "地域社会の活動",
+    "家庭・趣味",
+    "身の回りの世話"
+  ]
+}
