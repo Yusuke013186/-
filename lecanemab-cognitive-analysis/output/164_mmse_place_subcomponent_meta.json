@@ -1,0 +1,16 @@
+{
+  "n_tests": 172,
+  "n_tested": 156,
+  "fragile_threshold": 5,
+  "n_perm": 1000,
+  "n_loo_runs": 0,
+  "n_perm_runs": 0,
+  "place_subcomponents": [
+    "場所_県",
+    "場所_市",
+    "場所_病院",
+    "場所_階",
+    "場所_地方"
+  ],
+  "note": "場所_県は全観測で1点(不正解0件)のため相関探索の対象外。"
+}
