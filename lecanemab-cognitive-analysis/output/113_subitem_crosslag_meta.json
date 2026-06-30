@@ -1,0 +1,8 @@
+{
+  "hc_n_tests": 2,
+  "hc_n_tested": 2,
+  "n_loo_runs": 28,
+  "n_perm": 1000,
+  "n_perm_runs": 1,
+  "background_finding": "MMSE:場所見当識(Δ) x CDR:判断力・問題解決(Δ), ALL_PAIRS_SCAN rho=-0.627 q=0.012; GLasso偏相関=0.394 stability=0.956; MB近傍選択でも安定エッジ一致"
+}
