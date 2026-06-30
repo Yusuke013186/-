@@ -1,0 +1,11 @@
+{
+  "hg_n_tests": 22,
+  "hg_n_tested": 18,
+  "n_apathy": 12,
+  "n_no_apathy": 21,
+  "n_perm": 1000,
+  "n_loo_runs": 0,
+  "n_perm_runs": 0,
+  "fragile_threshold": 5,
+  "background": "ALL_PAIRS_SCAN Phase C/D used combined irritability+apathy grouping (42 tests, all non-significant); explore_psych_mmse_subitem_specificity.py (H-E) tested longitudinal slope interaction (also all non-significant). H-G tests apathy-only grouping on baseline/Δ as the remaining untested combination."
+}
