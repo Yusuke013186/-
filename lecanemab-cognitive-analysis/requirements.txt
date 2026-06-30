@@ -2,3 +2,4 @@ openpyxl
 pandas
 scipy
 statsmodels
+scikit-learn

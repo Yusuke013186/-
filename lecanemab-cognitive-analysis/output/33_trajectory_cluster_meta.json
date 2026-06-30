@@ -1,0 +1,27 @@
+{
+  "n_subjects_with_both_slopes": 31,
+  "best_k": 2,
+  "silhouette_by_k": [
+    {
+      "k": 2,
+      "シルエットスコア(Ward)": 0.6079285734531786
+    },
+    {
+      "k": 3,
+      "シルエットスコア(Ward)": 0.38754923316701423
+    },
+    {
+      "k": 4,
+      "シルエットスコア(Ward)": 0.41472036735609835
+    }
+  ],
+  "ari_ward_vs_kmeans": 1.0,
+  "bootstrap_ari_mean": 0.818711315849259,
+  "bootstrap_ari_95ci": [
+    0.024647063018869965,
+    1.0
+  ],
+  "observed_silhouette": 0.6079285734531786,
+  "permutation_p_value": 0.004995004995004995,
+  "n_bootstrap": 1000
+}

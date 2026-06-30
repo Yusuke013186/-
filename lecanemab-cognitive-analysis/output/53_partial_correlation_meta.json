@@ -1,0 +1,21 @@
+{
+  "n_subjects": 21,
+  "n_variables": 9,
+  "alpha_selected_graphical_lasso": 0.06667565488996123,
+  "n_bootstrap": 500,
+  "n_bootstrap_failed": 1,
+  "edge_threshold": 0.05,
+  "stable_threshold": 0.7,
+  "variables": [
+    "CDR-SB",
+    "Global CDR",
+    "CDR:見当識",
+    "CDR:判断力・問題解決",
+    "CDR:地域社会の活動",
+    "MMSE合計",
+    "MMSE:時間見当識",
+    "MMSE:場所見当識",
+    "MoCA-J合計"
+  ],
+  "sign_convention": "正の値=悪化方向(MMSE/MoCA-Jは符号反転済み)"
+}
