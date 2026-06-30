@@ -1,0 +1,15 @@
+{
+  "hf_n_tests": 1,
+  "n_apathy": 12,
+  "n_subj_2plus_timepoints": 28,
+  "n_per_timepoint": {
+    "0か月": 32,
+    "6か月": 18,
+    "12か月": 4,
+    "18か月": 26
+  },
+  "n_perm": 1000,
+  "n_loo_runs": 0,
+  "n_perm_runs": 0,
+  "missingness_caveat": "12か月N=4と極端に少なく、主要3項目(MMSE合計/CDR-SB/Global CDR)からMoCA-Jが除外されてきた既知の理由。本検定の結果はこの欠測パターンを割り引いて解釈する必要がある。"
+}

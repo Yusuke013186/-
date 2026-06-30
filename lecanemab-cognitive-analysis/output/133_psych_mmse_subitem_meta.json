@@ -1,0 +1,10 @@
+{
+  "he_n_tests": 11,
+  "he_n_tested": 10,
+  "n_apathy": 12,
+  "n_loo_runs": 0,
+  "n_perm": 1000,
+  "n_perm_runs": 0,
+  "low_var_threshold": 5,
+  "background_finding": "CDR:記憶 x 意欲低下 (H-D): coef=0.0174, q=0.00199, LOO robust (33/33), permutation p=0.003"
+}
