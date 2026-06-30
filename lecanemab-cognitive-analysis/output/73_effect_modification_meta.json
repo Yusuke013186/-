@@ -1,0 +1,11 @@
+{
+  "family1_n_tests": 3,
+  "family1_n_tested": 3,
+  "family2_n_tests": 6,
+  "family2_n_tested": 6,
+  "n_loo_runs": 99,
+  "n_perm": 1000,
+  "n_perm_runs": 3,
+  "n_irritable": 3,
+  "n_apathy": 12
+}
