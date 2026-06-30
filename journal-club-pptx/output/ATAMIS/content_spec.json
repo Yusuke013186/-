@@ -1,0 +1,148 @@
+{
+  "presenter": "堀内裕介",
+  "date_label": "●月●日",
+  "front_matter": [
+    {"type": "title", "image": "front/page_1.png"}
+  ],
+  "sections": [
+    {
+      "heading": "背景",
+      "slides": [
+        {
+          "bullets": [
+            {"level": 1, "text": "血栓溶解・血管内治療の適応とならない急性期脳梗塞には抗血小板療法が標準治療"},
+            {"level": 2, "text": "Mild-to-moderate脳梗塞(NIHSS 4-10)にはアスピリン単剤が推奨されている"},
+            {"level": 1, "text": "CHANCE・POINT試験では軽症脳卒中/TIA(NIHSS≦3)でクロピドグレル+アスピリン併用が90日以内の再発を抑制したが、機能予後は改善せず"},
+            {"level": 2, "text": "Mild-to-moderate脳梗塞(NIHSS 4-10)を対象とした併用療法のエビデンスは乏しい"},
+            {"level": 1, "text": "Early neurologic deterioration(早期神経学的増悪)は不良な機能予後と関連し、発症後48時間以内に最大50%が発生する"}
+          ],
+          "images": []
+        },
+        {
+          "bullets": [
+            {"level": 1, "text": "Research Question:Mild-to-moderateの急性期脳梗塞患者で、クロピドグレル+アスピリン併用はアスピリン単独より早期神経学的増悪を抑制できるか"},
+            {"level": 2, "text": "ATAMIS試験(Antiplatelet Therapy in Acute Mild to Moderate Ischemic Stroke)として実施"},
+            {"level": 2, "text": "中国66施設が参加した多施設共同ランダム化比較試験"}
+          ],
+          "images": []
+        }
+      ]
+    },
+    {
+      "heading": "方法",
+      "slides": [
+        {
+          "bullets": [
+            {"level": 1, "text": "Design:多施設共同・非盲検・盲検化エンドポイント評価のランダム化比較試験(中国66施設)"},
+            {"level": 1, "text": "対象:18歳以上、発症48時間以内の急性期脳梗塞、NIHSS 4-10、発症前mRS≦1"},
+            {"level": 2, "text": "除外:血栓溶解/血管内治療の適応例、抗凝固薬の適応、頭蓋内出血の既往、3か月以内の消化管/尿路出血、クロピドグレルまたはアスピリンへのアレルギー"}
+          ],
+          "images": []
+        },
+        {
+          "bullets": [
+            {"level": 1, "text": "介入:クロピドグレル+アスピリン併用群 vs アスピリン単独群に1:1でランダム割付"},
+            {"level": 2, "text": "併用群:初回負荷(クロピドグレル300mg+アスピリン100mg)→2-14日目はクロピドグレル75mg+アスピリン100mg→15-90日目はいずれか1剤"},
+            {"level": 2, "text": "単独群:1-14日目アスピリン100-300mg→15-90日目アスピリン100mg"},
+            {"level": 1, "text": "Primary outcome:7日以内のearly neurologic deterioration(脳出血等を除きNIHSSが基準値より2点以上増悪)"},
+            {"level": 2, "text": "Secondary outcome:90日mRS 0-1達成率、mRSスコア分布、NIHSS変化、90日以内の新規脳卒中・血管イベント・死亡など"},
+            {"level": 2, "text": "サンプルサイズ:3000例(各群1500例)で検出力80%以上を想定し設計"}
+          ],
+          "images": []
+        }
+      ]
+    },
+    {
+      "heading": "結果",
+      "slides": [
+        {
+          "bullets": [
+            {"level": 1, "text": "2016年12月〜2022年8月に3005例が登録され、3000例がランダム化(併用群1541例 vs 単独群1459例)"},
+            {"level": 2, "text": "5例を割付エラーで除外し、modified intention-to-treat集団は2915例(併用群1502例、単独群1413例)"},
+            {"level": 2, "text": "Per-protocol集団は2763例(併用群1433例、単独群1330例)"}
+          ],
+          "images": ["figures/figure1_flow.png"]
+        },
+        {
+          "bullets": [
+            {"level": 1, "text": "両群の背景因子はおおむねバランスが取れていた"},
+            {"level": 2, "text": "平均年齢65.9歳、男性64.6%、NIHSS中央値5(IQR 4-6)"},
+            {"level": 2, "text": "発症から抗血小板薬投与開始までの時間は両群とも平均19-20時間"}
+          ],
+          "images": ["figures/table1.png"]
+        },
+        {
+          "bullets": [
+            {"level": 1, "text": "Primary outcome(7日以内のearly neurologic deterioration)は併用群で有意に低下"},
+            {"level": 2, "text": "併用群4.8%(72/1502) vs 単独群6.7%(95/1413)"},
+            {"level": 2, "text": "Risk difference -1.9%(95%CI -3.6〜-0.2、P=.03)、Risk ratio 0.71(95%CI 0.53-0.96、P=.03)"},
+            {"level": 2, "text": "予後因子で調整した解析でも同様の結果(調整後RD -1.9%、P=.03)"}
+          ],
+          "images": ["figures/table2a.png"]
+        },
+        {
+          "bullets": [
+            {"level": 1, "text": "Secondary outcome(90日mRS 0-1、NIHSS変化、新規脳卒中、血管イベント・死亡)はいずれも有意差なし"},
+            {"level": 1, "text": "出血イベント・重篤な有害事象の発生率も両群間で有意差なし、安全性は同等"}
+          ],
+          "images": ["figures/table2cont.png"]
+        },
+        {
+          "bullets": [
+            {"level": 1, "text": "90日時点のmRSスコア分布も両群でほぼ同様"},
+            {"level": 2, "text": "mRS 0-1達成率:併用群76.9% vs 単独群74.6%(オッズ比1.10、95%CI 0.96-1.25、P=.19)"}
+          ],
+          "images": ["figures/figure2_mrs.png"]
+        },
+        {
+          "bullets": [
+            {"level": 1, "text": "事前規定サブグループ解析では大半の因子で交互作用なし"},
+            {"level": 2, "text": "発症から治療開始までの時間のみ有意な交互作用を認めた(P=.01)"},
+            {"level": 2, "text": "24時間未満で治療開始した群では併用療法の効果がより明確(RD -3.6%)、24時間以降では効果を認めず"}
+          ],
+          "images": ["figures/figure3_forest.png"]
+        }
+      ]
+    },
+    {
+      "heading": "考察",
+      "slides": [
+        {
+          "bullets": [
+            {"level": 1, "text": "Mild-to-moderate脳梗塞(NIHSS 4-10)を対象に、クロピドグレル+アスピリン併用が早期神経学的増悪を抑制することを示した初の大規模RCT"},
+            {"level": 2, "text": "CHANCE・POINT試験は軽症脳卒中/TIA(NIHSS≦3)が対象であり、本試験は対象集団が異なる"},
+            {"level": 1, "text": "90日機能予後は併用群で有意な改善を認めなかった"},
+            {"level": 2, "text": "より重症例(NIHSS中央値9)を対象としたRESCUE-BT2試験では機能予後改善のシグナルがあり、ATAMISが比較的軽症例(NIHSS中央値5)中心だったことが一因と考察"}
+          ],
+          "images": []
+        },
+        {
+          "bullets": [
+            {"level": 1, "text": "併用療法による出血リスクの増加は認めなかった"},
+            {"level": 2, "text": "出血イベント率0.7%は先行研究(ARAMIS 1.6%、CHANCE 2.3%)より低く、14日間という短い併用期間が一因と考察"},
+            {"level": 1, "text": "発症から24時間以内の早期治療開始がより大きな効果と関連(交互作用P=.01)"},
+            {"level": 2, "text": "早期の強力な抗血小板療法が早期神経学的増悪の抑制に重要である可能性を示唆"}
+          ],
+          "images": []
+        }
+      ]
+    },
+    {
+      "heading": "Limitation",
+      "slides": [
+        {
+          "bullets": [
+            {"level": 1, "text": "単純ランダム化により群間で症例数に不均衡(1541 vs 1459)が生じ、検出力低下の可能性"},
+            {"level": 1, "text": "Open-label design(治療割付の遮蔽なし)、ただしエンドポイント評価は盲検化し測定バイアスを低減"},
+            {"level": 1, "text": "Mild症例(NIHSS 4-5)が67.4%を占め、moderate症例における検出力が限定的"},
+            {"level": 1, "text": "血栓溶解/血管内治療の適応例を除外しており、一般化可能性に限界"},
+            {"level": 1, "text": "併用療法の投与期間は14日間のみで、至適投与期間は不明"},
+            {"level": 1, "text": "Early neurologic deteriorationの定義(7日でNIHSS≧2点増悪)が神経学的変動の影響を受けた可能性"},
+            {"level": 1, "text": "対象が中国人集団に限定されており、他の人種・民族集団での検証が必要"}
+          ],
+          "images": []
+        }
+      ]
+    }
+  ]
+}
