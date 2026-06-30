@@ -2,7 +2,7 @@
 """Build the journal-club (抄読会) PPTX from a JSON content spec.
 
 Usage:
-    python build_pptx.py content_spec.json output.pptx
+    python generate_deck.py content_spec.json output.pptx
 
 Full JSON schema
 -----------------
@@ -630,7 +630,7 @@ def build(spec, output_path, base_dir):
 
 def main():
     if len(sys.argv) != 3:
-        print("Usage: python build_pptx.py <content_spec.json> <output.pptx>", file=sys.stderr)
+        print("Usage: python generate_deck.py <content_spec.json> <output.pptx>", file=sys.stderr)
         sys.exit(1)
 
     spec_path, output_path = sys.argv[1], sys.argv[2]

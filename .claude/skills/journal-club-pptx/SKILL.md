@@ -21,7 +21,7 @@ Building the deck is a two-stage process on purpose:
 2. **A deterministic script does the layout** — exact colors, fonts, margins,
    bullet glyphs. This is OOXML-level work (mixed Japanese/Latin typefaces,
    custom bullet characters) that is fiddly and easy to get subtly wrong by hand,
-   so it is fully delegated to `scripts/build_pptx.py`. Never hand-write slide
+   so it is fully delegated to `scripts/generate_deck.py`. Never hand-write slide
    XML or call low-level python-pptx font APIs directly for this skill — express
    everything as the JSON spec below and let the script render it.
 
@@ -233,7 +233,7 @@ Notes on the schema:
 ### 6. Build the deck
 
 ```bash
-python scripts/build_pptx.py work/content_spec.json output.pptx
+python scripts/generate_deck.py work/content_spec.json output.pptx
 ```
 
 The script raises a clear, file-and-context-specific error (missing image,
@@ -276,7 +276,7 @@ normally enough unless the fix reveals a new problem.
 - **`scripts/extract_images.py`** — `render` (whole pages to PNG) and `crop`
   (single figure/table region, re-rendered straight from the PDF, with
   whitespace autotrim). Run `--help` on either subcommand for all flags.
-- **`scripts/build_pptx.py`** — turns the JSON spec into the final .pptx. Full
+- **`scripts/generate_deck.py`** — turns the JSON spec into the final .pptx. Full
   schema is also documented in its module docstring.
 
 ## Visual style — measured against the reference template
@@ -284,7 +284,7 @@ normally enough unless the fix reveals a new problem.
 These constants were measured directly off `精読の例.pdf` (pixel-sampled
 colors, cropped/zoomed text for weight and placement) rather than guessed from
 the text spec alone. They all live in one block at the top of
-`scripts/build_pptx.py` — if a different reference file shows up later,
+`scripts/generate_deck.py` — if a different reference file shows up later,
 re-render a sample deck (see Visual QA below) and compare side-by-side before
 changing any of this, the same way this set of values was derived:
 
