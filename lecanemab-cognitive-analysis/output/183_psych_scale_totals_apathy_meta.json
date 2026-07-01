@@ -1,0 +1,10 @@
+{
+  "n_tests": 8,
+  "n_tested": 8,
+  "n_apathy": 12,
+  "n_no_apathy": 21,
+  "n_perm": 1000,
+  "n_loo_runs": 0,
+  "n_perm_runs": 0,
+  "background": "Phase C/D: combined psych group, all non-significant. 2-B: CDR-SB time×apathy interaction significant. H-D: CDR subdomains Δ × apathy — 記憶 FDR-sig but permutation failed. H-G: MMSE subitems baseline/Δ × apathy — all non-significant. H-J fills the gap: scale totals × apathy-only, baseline+Δ Mann-Whitney."
+}
