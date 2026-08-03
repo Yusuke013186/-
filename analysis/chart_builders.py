@@ -76,7 +76,7 @@ def build_kekka2_chart(slide, rect):
         s_ref_bot.add_data_point(x, round(band - 0.35, 3))
 
     s_zero = xd.add_series("Δ=0")
-    s_zero.add_data_point(3.5, 0); s_zero.add_data_point(20.5, 0)
+    s_zero.add_data_point(0, 0); s_zero.add_data_point(24, 0)
 
     x, y, w, h = _rect_to_inches(rect)
     gframe = slide.shapes.add_chart(XL_CHART_TYPE.XY_SCATTER_LINES, x, y, w, h, xd)
@@ -101,10 +101,12 @@ def build_kekka2_chart(slide, rect):
 
     hide_legend_entries(chart, [4, 5, 6])
 
+    # 縦軸：ゼロを中心に整数のみを振る（実測データは-9〜+6）
     val_ax = chart.value_axis
-    style_axis(val_ax, title="Δ MMSE（ベースラインからの変化量、点）", min_=-10.5, max_=8.5, major_unit=2)
+    style_axis(val_ax, title="Δ MMSE（ベースラインからの変化量、点）", min_=-10, max_=10, major_unit=2)
+    # 横軸：実際のデータ点（6・12・18か月）に目盛りが一致するよう整数化
     cat_ax = chart.category_axis
-    style_axis(cat_ax, title="レカネマブ投与開始からの経過時点（か月）", min_=3.5, max_=20.5, major_unit=6)
+    style_axis(cat_ax, title="レカネマブ投与開始からの経過時点（か月）", min_=0, max_=24, major_unit=6)
     return chart
 
 
@@ -154,8 +156,9 @@ def _build_overlay_line_chart(slide, rect, ids_nasi, ids_ari, title_x=None, titl
         hide_indices = list(range(0, idx_mean_nasi))
         hide_legend_entries(chart, hide_indices)
 
+    # 縦軸：MMSE実測値（実データは16〜29点）を整数目盛りで表示
     val_ax = chart.value_axis
-    style_axis(val_ax, title=title_y, min_=14.5, max_=30.5, major_unit=2)
+    style_axis(val_ax, title=title_y, min_=14, max_=30, major_unit=2)
     cat_ax = chart.category_axis
     style_axis(cat_ax, title=title_x, grid=False)
     return chart
@@ -190,7 +193,7 @@ def build_sanko1_charts(slide, rect):
         style_individual_series(ser_l[i], RED, width_pt=1.2, alpha_pct=55)
     style_mean_series(ser_l[len(ari)], RED, width_pt=3.0, marker_size=8)
     hide_legend_entries(chart_l, list(range(len(ari))))
-    style_axis(chart_l.value_axis, title="MMSE実測値（点）", min_=14.5, max_=30.5, major_unit=2)
+    style_axis(chart_l.value_axis, title="MMSE実測値（点）", min_=14, max_=30, major_unit=2)
     style_axis(chart_l.category_axis, title=f"改善訴えあり（n={len(ari)}）", grid=False)
 
     cd_r = CategoryChartData(); cd_r.categories = TP_LABELS
@@ -208,7 +211,7 @@ def build_sanko1_charts(slide, rect):
         style_individual_series(ser_r[i], BLUE, width_pt=1.0, alpha_pct=42)
     style_mean_series(ser_r[len(nasi)], BLUE, width_pt=3.0, marker_size=8)
     hide_legend_entries(chart_r, list(range(len(nasi))))
-    style_axis(chart_r.value_axis, min_=14.5, max_=30.5, major_unit=2, grid=True)
+    style_axis(chart_r.value_axis, min_=14, max_=30, major_unit=2, grid=True)
     style_axis(chart_r.category_axis, title=f"改善訴えなし（n={len(nasi)}）", grid=False)
     return chart_l, chart_r
 
@@ -299,7 +302,7 @@ def build_sanko2_charts(slide, rect):
     s_ref_top = xd.add_series("参照帯上限")
     s_ref_bot = xd.add_series("参照帯下限")
     band = ANN * 1.5
-    for xx in (0.6, 2.4):
+    for xx in (0.2, 2.8):  # 横軸の整数目盛り範囲（0〜3）に合わせて全幅に敷く
         s_ref_top.add_data_point(xx, round(band + 0.35, 3))
         s_ref_bot.add_data_point(xx, round(band - 0.35, 3))
 
@@ -323,10 +326,11 @@ def build_sanko2_charts(slide, rect):
     add_error_bars(ser[3], [q3n - medn], [medn - q1n], color=BLUE, width_pt=1.4)
     style_ref_line(ser[4]); style_ref_line(ser[5])
     hide_legend_entries(chart_l, [4, 5])
-    style_axis(chart_l.value_axis, title="18か月時点の Δ MMSE（点）", min_=-10.5, max_=6.5, major_unit=2)
+    # 縦軸：結果2と同じくゼロを中心に整数のみ（実データは-9〜+5）
+    style_axis(chart_l.value_axis, title="18か月時点の Δ MMSE（点）", min_=-10, max_=10, major_unit=2)
     style_axis(chart_l.category_axis,
               title="1 = 改善訴えあり(n=9)　　2 = 改善訴えなし(n=20)",
-              min_=0.5, max_=2.5, major_unit=1, grid=False)
+              min_=0, max_=3, major_unit=1, grid=False)
 
     # ---- 右：ベースラインMMSEとの相関＋回帰直線 ----
     # ここも点数の多い順（なし20例 → あり9例 → 回帰直線・Δ=0）に系列を追加する
@@ -343,7 +347,7 @@ def build_sanko2_charts(slide, rect):
     d_all = D_MMSE.loc[IDS, "18か月"].astype(float).values
     slope, intercept = np.polyfit(b_all, d_all, 1)
     r, pval = stats.pearsonr(b_all, d_all)
-    xmin, xmax = b_all.min() - 0.6, b_all.max() + 0.6
+    xmin, xmax = 18, 30  # 横軸の整数目盛り範囲（18〜30）と一致させる
     s_reg = xd2.add_series(f"回帰直線（全29例, r={r:.2f}, p={pval:.3f}）")
     s_reg.add_data_point(round(xmin, 2), round(slope * xmin + intercept, 3))
     s_reg.add_data_point(round(xmax, 2), round(slope * xmax + intercept, 3))
@@ -361,7 +365,7 @@ def build_sanko2_charts(slide, rect):
     style_ref_line(ser2[2], color="404040", width_pt=1.6)
     style_ref_line(ser2[3], color=GREY, width_pt=1.0)
     hide_legend_entries(chart_r, [3])
-    style_axis(chart_r.value_axis, title="18か月時点の Δ MMSE（点）", min_=-10.5, max_=6.5, major_unit=2)
-    style_axis(chart_r.category_axis, title="ベースラインMMSE（点）", min_=17.5, max_=28.5, major_unit=2)
+    style_axis(chart_r.value_axis, title="18か月時点の Δ MMSE（点）", min_=-10, max_=10, major_unit=2)
+    style_axis(chart_r.category_axis, title="ベースラインMMSE（点）", min_=18, max_=30, major_unit=2)
 
     return chart_l, chart_r, (r, pval, slope)
