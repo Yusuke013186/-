@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """フェーズ4：新規スライドを 8月5日に見せるスライド.pptx に統合する。
 結果1（スライド1）・結果5（スライド2）は一切改変しない。"""
-import copy, pathlib
+import sys, copy, pathlib
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from pptx import Presentation
 from pptx.util import Emu, Pt
 from pptx.dml.color import RGBColor
@@ -9,6 +10,7 @@ from pptx.enum.shapes import MSO_SHAPE
 from pptx.enum.text import PP_ALIGN
 from pptx.oxml.ns import qn
 from PIL import Image
+import chart_builders as cb
 
 SRC = "8月5日に見せるスライド.pptx"
 DST = "8月5日に見せるスライド_更新版.pptx"
@@ -80,9 +82,12 @@ def add_badge(slide, verdict_line, detail_line, fill, border, text_color, rect=B
     return box
 
 
-def add_slide(prs, num_label, title_rest, subtitle, image, captions, badge=None):
+def add_slide(prs, num_label, title_rest, subtitle, image, captions, badge=None, chart_fn=None):
     """badge: (verdict_line, detail_line, fill, border, text_color) を渡すと、
-    サブタイトルの下に判定バッジを置き、図の枠をその分だけ縮める。"""
+    サブタイトルの下に判定バッジを置き、図の枠をその分だけ縮める。
+    chart_fn: (slide, rect) を受け取り本物のPowerPointネイティブグラフを組み立てる
+    コールバック。imageの代わりにこちらを渡すと、画像ではなくグラフオブジェクトを
+    挿入する（右クリック→「データの編集」が可能）。image と chart_fn は排他。"""
     slide = prs.slides.add_slide(prs.slide_layouts[0])
     # タイトル（「結果N」40pt ＋ 以降 32pt、結果1・結果5と同一書式）
     add_textbox(slide, TITLE, [[(num_label, 40, False), (title_rest, 30, False)]], 40, BLACK)
@@ -97,8 +102,11 @@ def add_slide(prs, num_label, title_rest, subtitle, image, captions, badge=None)
         body_rect = BODY_WITH_BADGE
     else:
         body_rect = BODY
-    # 図（縦横比を保ってコンテンツ枠に内接させ、水平中央に配置）
-    if image is not None:
+    assert not (image is not None and chart_fn is not None), "image と chart_fn は同時に指定できません"
+    if chart_fn is not None:
+        chart_fn(slide, body_rect)
+    elif image is not None:
+        # 図（縦横比を保ってコンテンツ枠に内接させ、水平中央に配置）
         bx, by, bw, bh = body_rect
         iw, ih = Image.open(image).size
         sc = min(bw / iw, bh / ih)
@@ -246,14 +254,15 @@ s = add_slide(
     prs, "結果2",
     "　改善の訴えをアンカーとしたΔMMSEの推移",
     "この図の役割：主観的な訴えがMMSEの変化量を層別しないことを、先行研究と同じアンカーベースの枠組みで示す。",
-    FIGD / "slide_ΔMMSE_アンカー別推移.png",
+    None,
     ["バッジの色は判定を表す（以降のスライドも共通）：灰色＝有意差なし／黄色＝有意差あり・探索的で未補正／橙＝有意差あり・交絡に要注意。",
      "各時点の値はベースライン（0か月）からのΔMMSEの群平均、エラーバーは95% CI。淡色の点は個別症例（横方向にジッターを付与）。",
      "改善訴えあり群 n=9、改善訴えなし群 n=20（12か月のみ n=19）。18か月時点のΔMMSE：Welchのt検定 p=0.581、Mann-Whitney検定 p=0.200。",
      "灰色帯は年 −1.01 点の低下（Aakre JA, et al. Alzheimers Dement (N Y). 2025）を目安として示した参照帯であり、本研究で閾値判定に用いたものではない。"],
     badge=("有意差なし（各時点とも p > 0.05）",
            "18か月時点のΔMMSE　Welchのt検定 p = 0.581／Mann-Whitney検定 p = 0.200（訴えあり n=9／なし n=20）",
-           NOTSIG_FILL, NOTSIG_BORDER, NOTSIG_TEXT))
+           NOTSIG_FILL, NOTSIG_BORDER, NOTSIG_TEXT),
+    chart_fn=cb.build_kekka2_chart)
 set_notes(s, """【このスライドの存在理由】
 Cano S, et al. J Prev Alzheimers Dis 2022 (doi:10.14283/jpad.2022.102) は、全般的印象（＝臨床医の主観的判断）をアンカー、MMSEをターゲット測度としたアンカーベース解析で、MMSEとアンカーの相関が36週より前のどの時点でも不十分であったと報告している。
 本スライドはその枠組みを本研究データに当てはめたもので、アンカーを「レカネマブ投与後の症状改善の訴え（あり／記載なし）」に置き換えた追試にあたる。
@@ -272,13 +281,14 @@ s = add_slide(
     prs, "結果3",
     "　個別症例のMMSE推移（29例の重ね合わせ）",
     "この図の役割：群平均が重なっていても個々の軌跡は同一ではないことを示す（結果5への伏線）。",
-    FIGD / "slide_個別症例MMSE推移_重ね合わせ.png",
+    None,
     ["細線は個別症例、太線は群平均。赤＝改善訴えあり（n=9）、青＝改善訴えなし（n=20）。色分けはMMSEの増減とは無関係である。",
      "個人内の変動幅（4時点の最大−最小）の平均は 訴えあり 4.67点／訴えなし 3.05点（Mann-Whitney p=0.034）。Δ18MのSDは 訴えあり 4.76／訴えなし 2.83（Levene検定 p=0.146）。",
      "18か月時点でベースラインより改善／不変／悪化：訴えあり 6／0／3例、訴えなし 7／4／9例。群平均の推移は両群でほぼ重なる（結果5）。"],
     badge=("個人内変動幅は有意差あり（探索的）／分散(Levene)は有意差なし",
            "変動幅の中央値差　Mann-Whitney検定 p = 0.034　｜　Δ18MのSD比較　Levene検定 p = 0.146（n=9 vs 20、多重比較未補正）",
-           MIX_FILL, MIX_BORDER, MIX_TEXT))
+           MIX_FILL, MIX_BORDER, MIX_TEXT),
+    chart_fn=cb.build_kekka3_chart)
 set_notes(s, """【このスライドの存在理由】
 結果5では2群の平均MMSEがほぼ重なる。しかしそれは「29例が同じように推移した」ことを意味しない。
 個別軌跡を重ねると、訴えあり群（赤）のほうが軌跡のばらつきが大きい。個人内変動幅の平均は 4.67点 対 3.05点、18か月ΔMMSEのSDは 4.76 対 2.83 で、いずれも訴えあり群のほうが大きい。
@@ -300,13 +310,14 @@ s = add_slide(
     prs, "結果4",
     "　MMSE下位項目別の推移の群間比較",
     "この図の役割：11の下位項目のいずれでも訴えの有無が推移を層別しないことを確認する（探索的解析）。",
-    FIGD / "slide_MMSE下位項目パネル.png",
+    None,
     ["各パネルは下位項目ごとの群平均±95% CI。赤＝改善訴えあり（n=9）、青＝改善訴えなし（n=20）。",
      "18か月時点の変化量を項目ごとにMann-Whitney検定で比較し、Benjamini-Hochberg法でFDR補正した。補正前 p<0.05 は 0/11、補正後 q<0.05 も 0/11。",
      "多重比較を含む探索的（hypothesis-generating）解析であり、確証的解析ではない。1点満点の項目は1例の増減で結果が動くため単独では解釈しない。"],
     badge=("MMSE下位項目 11/11・CDR 6/6 いずれも有意差なし",
            "MMSE下位項目 最小 p = 0.157（FDR補正後 最小 q = 0.778）／CDR6領域 最小 p = 0.598。補正前の段階から有意な項目はゼロ。",
-           NOTSIG_FILL, NOTSIG_BORDER, NOTSIG_TEXT))
+           NOTSIG_FILL, NOTSIG_BORDER, NOTSIG_TEXT),
+    chart_fn=cb.build_kekka4_panel)
 set_notes(s, """【このスライドの存在理由】
 「合計点で差が出ないのは、改善した下位項目と悪化した下位項目が打ち消し合っているからではないか」という当然の反論に、あらかじめ答えておくためのスライド。
 結論は、11項目のいずれでも訴えの有無は18か月の変化量を層別しなかった、である。補正前の段階ですでに有意な項目はなく、FDR補正で初めて消えたわけではない点は強調してよい。
@@ -330,26 +341,29 @@ n=9 対 20 の小標本かつ不均衡であり、この解析で「差がない
 s = add_slide(
     prs, "参考1", "　個別症例のMMSE推移（群別表示）",
     "結果3の代替案：群内のばらつきを見やすくした2パネル版。どちらを本番で使うかは要相談。",
-    FIGD / "slide_個別症例MMSE推移_群別2パネル.png",
+    None,
     ["細線は個別症例、太線は群平均。左：改善訴えあり（n=9）、右：改善訴えなし（n=20）。縦軸は両パネルで共通。",
      "重ね合わせ版（結果3）と同一データ。群内のばらつきを見せたい場合はこちら、2群の比較を見せたい場合は重ね合わせ版が適する。"],
     badge=("結果3と同一データの検定結果（詳細は結果3を参照）",
            "個人内変動幅　Mann-Whitney検定 p = 0.034（探索的）　｜　Δ18MのSD　Levene検定 p = 0.146（有意差なし）",
-           MIX_FILL, MIX_BORDER, MIX_TEXT))
+           MIX_FILL, MIX_BORDER, MIX_TEXT),
+    chart_fn=cb.build_sanko1_charts)
 set_notes(s, "結果3のスライドに使う図の代替案。指示書タスク②-1(b)に対応。重ね合わせ版(a)と群別2パネル版(b)のどちらをメインにするかは上野先生の判断を仰ぐ。")
 
 s = add_slide(
     prs, "参考2", "　18か月ΔMMSEの分布とベースライン重症度",
     "結果2の補足：群分けよりベースライン重症度のほうがMMSEの推移をよく説明する。",
-    FIGD / "slide_18か月ΔMMSE_ドットプロット.png",
-    ["左：18か月時点のΔMMSEの分布（箱ひげ＋個別点、点の色はベースラインMMSE）。灰色帯は年 −1.01 点相当の参照帯。",
+    None,
+    ["左：18か月時点のΔMMSEの分布（中央値とIQRの誤差棒＋ジッター付き個別点）。灰色帯は年 −1.01 点相当の参照帯。",
      "右：ベースラインMMSEと18か月ΔMMSEの関係（29例全体で r = −0.50, p = 0.006）。ベースラインが高い症例ほど18か月での低下が大きい。",
      "ただしΔMMSEはベースラインを含んで計算されるため、この相関には平均への回帰（regression to the mean）が数学的に含まれる。因果的な解釈はできない。"],
     badge=("相関は統計的に有意（ただし平均への回帰を含み因果解釈は不可）",
            "ベースラインMMSEと18か月ΔMMSEの相関（29例）　Pearson相関 r = −0.50, p = 0.006",
-           SIG_FILL, SIG_BORDER, SIG_TEXT))
+           SIG_FILL, SIG_BORDER, SIG_TEXT),
+    chart_fn=cb.build_sanko2_charts)
 set_notes(s, """【このスライドの存在理由】
-文献調査の「応用Ver 図の設計仕様」パネルBに対応。個々の点をベースラインMMSEで着色すると、群分け（訴えの有無）よりもベースライン重症度のほうがΔMMSEを説明していることが見える。
+文献調査の「応用Ver 図の設計仕様」パネルBに対応。右側の散布図で示すとおり、群分け（訴えの有無）よりもベースライン重症度のほうがΔMMSEを説明していることが見える。
+左側は箱ひげ図の代わりに中央値とIQR（四分位範囲）の誤差棒＋個別点で分布を示している（ネイティブPowerPointグラフでは箱ひげ図が作成できないための代替表現）。
 
 【重要な留保】
 r = −0.50, p = 0.006 は統計的に有意だが、Δ = 18か月値 − ベースライン値 という定義上、ベースラインとΔは数学的に負に相関する（平均への回帰）。この所見を「重症度が予後を決める」と読むことはできない。
