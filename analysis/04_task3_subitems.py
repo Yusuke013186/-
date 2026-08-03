@@ -158,3 +158,22 @@ fig.tight_layout()
 fig.savefig(FIG / "fig_3_注目下位項目_拡大.png")
 plt.close(fig)
 print("図を出力しました。")
+
+# ============================== 分散の比較（結果3のばらつき主張の検定） ==============================
+print("\n" + "=" * 78)
+print("結果3　個人内変動幅・Δ18MのSDの群間差についての検定（分散の比較）")
+print("=" * 78)
+W_mmse = wide_scores(mmse, "合計_原資料記載値", IDS)
+D18 = (W_mmse["18か月"] - W_mmse["0か月"]).astype(float)
+d_ari = D18.loc[ari].dropna(); d_nasi = D18.loc[nasi].dropna()
+lev = stats.levene(d_ari, d_nasi, center="median")
+print(f"Δ18MのSD：訴えあり {d_ari.std(ddof=1):.2f} (n={len(d_ari)}) / 訴えなし {d_nasi.std(ddof=1):.2f} (n={len(d_nasi)})")
+print(f"Levene検定（分散の均一性）：F={lev.statistic:.3f}, p={lev.pvalue:.3f}")
+
+rng_ = W_mmse.loc[IDS, TP_LABELS].astype(float).max(axis=1) - W_mmse.loc[IDS, TP_LABELS].astype(float).min(axis=1)
+r_ari = rng_.loc[ari]; r_nasi = rng_.loc[nasi]
+lev2 = stats.levene(r_ari, r_nasi, center="median")
+mw_rng = stats.mannwhitneyu(r_ari, r_nasi, alternative="two-sided")
+print(f"個人内変動幅：訴えあり {r_ari.mean():.2f} (n={len(r_ari)}) / 訴えなし {r_nasi.mean():.2f} (n={len(r_nasi)})")
+print(f"Levene検定（変動幅の分散均一性）：F={lev2.statistic:.3f}, p={lev2.pvalue:.3f}")
+print(f"Mann-Whitney（変動幅の中心の比較）：p={mw_rng.pvalue:.3f}")
