@@ -253,14 +253,8 @@ def build_kekka4_panel(slide, rect):
         add_error_bars(ser[0], ari_h, ari_h, color=RED, width_pt=0.6)
         add_error_bars(ser[1], nasi_h, nasi_h, color=BLUE, width_pt=0.6)
 
-        allvals = [a[0] - (a[1] if not np.isnan(a[1]) else 0) for a in ari_ms + nasi_ms] + \
-                  [a[0] + (a[1] if not np.isnan(a[1]) else 0) for a in ari_ms + nasi_ms]
-        lo, hi = min(allvals), max(allvals)
-        if hi - lo < 1.0:
-            c_ = (hi + lo) / 2
-            lo, hi = c_ - 0.5, c_ + 0.5
-        pad = (hi - lo) * 0.12
-        style_axis(chart.value_axis, min_=round(lo - pad, 2), max_=round(hi + pad, 2), tick_size=7.5)
+        # 縦軸：0点を原点（横軸との交差点）とし、上限を満点、1点刻みで整数目盛りを振る
+        style_axis(chart.value_axis, min_=0, max_=MMSE_SUB_MAX[it], major_unit=1, tick_size=7.5)
         style_axis(chart.category_axis, grid=False, tick_size=7.5)
         charts.append(chart)
     return charts

@@ -245,9 +245,77 @@ Mann-Whitney p=0.034は名目上0.05を下回るが、①図を見てから事�
     return slide
 
 
+def fix_kekka5_errorbars(prs):
+    """結果5チャート（chart1.xml、元ファイルから無改変で持ち込んでいる唯一のグラフ）の
+    誤差棒（95%CI）を、現在のxlsxデータから再計算した正しい値に修正する。
+
+    【調査の経緯】
+    上野先生より「結果5はxlsxの算出値と矛盾しないか」との確認依頼を受け、xlsxから
+    独立に群平均・p値・誤差棒を再計算したところ、群平均とp値（Welch t=0.804、
+    Mann-Whitney=0.617、ベースライン調整後=0.879）は完全に一致した。
+    一方、「訴えなし」群(n=20)の誤差棒（95%CI半幅）のみ、xlsxの現在値から計算した
+    値（0.97/1.01/1.13/1.12）と、元チャートの値（0.95/1.06/1.18/1.59）が一致しない
+    ことが判明した。「訴えあり」群の誤差棒は完全に一致している。
+
+    要再確認ログを調べたところ、訴えなし群のL7の18か月MMSE合計が「17→26」、
+    0か月MMSE合計が「25→22」に事後修正されていた記録があり、L7の18か月を修正前の
+    17点に戻して計算すると誤差棒が0.941（元チャート記載0.95）と近似することを確認、
+    0か月についても同様の近似が得られた。すなわち、元チャートの誤差棒は
+    データ確定前の旧い値をもとに計算されたまま更新されていなかったと判断できる。
+    群平均・p値は正しく最新データを反映している一方、誤差棒（見た目のCI幅）だけが
+    古いままだったという状態であり、結論（有意差なし）そのものへの影響はない。
+
+    以上より、誤差棒の4つの数値のみを最新xlsxベースの正しい値に置き換える。
+    グラフの種類・配色・データラベル・レイアウトなど、結果5のそれ以外の要素は
+    一切変更しない。"""
+    from pptx.oxml.ns import qn
+    part = None
+    for rel in prs.part.rels.values():
+        if "chart" in rel.reltype:
+            part = rel.target_part
+            break
+    # スライド2（結果5）のグラフパートを直接たどる
+    slide5 = prs.slides[1]
+    chart_part = None
+    for shape in slide5.shapes:
+        if shape.has_chart:
+            chart_part = shape.chart.part
+            break
+    assert chart_part is not None, "結果5のグラフが見つかりません"
+    chart_xml = chart_part._element
+
+    NS = "{http://schemas.openxmlformats.org/drawingml/2006/chart}"
+    OLD = ["0.95", "1.06", "1.18", "1.59"]
+    NEW = ["0.97", "1.01", "1.13", "1.12"]
+
+    fixed = 0
+    for ser in chart_xml.iter(f"{NS}ser"):
+        tx = ser.find(f"{NS}tx")
+        name_el = tx.find(f".//{NS}v") if tx is not None else None
+        if name_el is None or name_el.text != "改善訴えなし":
+            continue
+        errbars = ser.find(f"{NS}errBars")
+        if errbars is None:
+            continue
+        for tag in ("plus", "minus"):
+            numlit = errbars.find(f"{NS}{tag}/{NS}numLit")
+            if numlit is None:
+                continue
+            pts = numlit.findall(f"{NS}pt")
+            for pt in pts:
+                v = pt.find(f"{NS}v")
+                idx = int(pt.get("idx"))
+                if v is not None and v.text == OLD[idx]:
+                    v.text = NEW[idx]
+                    fixed += 1
+    assert fixed == 8, f"修正されたはずの誤差棒の値の数が想定と異なります（{fixed}/8）。手動確認が必要です。"
+    print(f"結果5の誤差棒（訴えなし群）を修正：{OLD} → {NEW}")
+
+
 prs = Presentation(SRC)
 n_orig = len(prs.slides)
 assert n_orig == 2, f"元ファイルのスライド数が想定外です: {n_orig}"
+fix_kekka5_errorbars(prs)
 
 # ============================== 結果2（応用Ver） ==============================
 s = add_slide(
