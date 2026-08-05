@@ -245,6 +245,85 @@ Mann-Whitney p=0.034は名目上0.05を下回るが、①図を見てから事�
     return slide
 
 
+def fix_kekka1_table(prs):
+    """結果1（患者背景表、slide1のネイティブテーブル）の数値を、xlsxから独立に
+    再計算した値と照合し、矛盾していたセルのみを修正する。
+
+    【調査結果】
+    上野先生より「結果1はxlsxの算出値と矛盾しないか」との確認依頼を受け、表の
+    全12項目をxlsxから独立に再計算した。
+
+    ■ 完全一致（無変更）：易怒性 15(22.7%)、意欲低下 22(33.3%)、両方なし 31(47.0%)
+
+    ■ xlsxに該当データが存在せず、照合・再現ともに不可能（無変更のまま）：
+      年齢（歳）、女性／男性（性別）、HDS-R合計点
+      → xlsxの6シート（README/MMSE/CDR/MoCA-J/精神症状/要再確認ログ）のいずれにも
+        年齢・性別・HDS-Rに relatable な列が存在しない。別データソースに基づく値と
+        考えられるため、Claude Codeの判断では修正できない。上野先生・堀内先生への
+        確認事項として別途リストに記載する。
+
+    ■ 矛盾があり修正した項目：
+      - MMSE合計点：24.4±2.2 → 24.4±2.1（n=66、全例算出）。平均は一致、SDのみ
+        0.1点の差。個別の値修正履歴（L5,L6,L7の0か月MMSE修正）を反映しても
+        再現せず、原因は特定できていないが、現在xlsxからの計算値が正である。
+      - MoCA-J合計点：20.7±3.0 → 20.6±3.0（n=58、8例は原資料未確認のため欠測。
+        元の表はこの欠測に触れていなかった）。
+      - CDR-SB：2.0±1.1 → 2.1±1.0（n=63、3例はCDR評価資料未確認のため欠測）。
+      - Global CDR = 0.5：60(90.9%) → 56(84.8%)、Global CDR = 1.0：6(9.1%)は
+        件数として一致するが分母の考え方を統一し 9.1%(N=66比) のまま据え置き。
+        実際にはGlobal CDR評価済みは63例のみ（3例：L5,L8,L19が評価資料未確認で
+        欠測）で、うち1例（L18）はCDR=0.0（88.9%/9.5%/1.6%の内訳）。元の表は
+        60+6=66として記載されており、欠測3例とCDR=0.0の1例（計4例）を実質的に
+        「0.5」に含めてしまっていたとみられる。今回、実際の内訳が分かるよう
+        脚注に明記した。
+
+    以上の修正は表の数値セルのみに適用し、行構成・デザイン・フォント書式は
+    一切変更しない。年齢・性別・HDS-Rの3項目は判断材料がないため元の記載を
+    保持している（要確認事項として別途報告）。"""
+    slide1 = prs.slides[0]
+    table = None
+    for shape in slide1.shapes:
+        if shape.has_table:
+            table = shape.table
+            break
+    assert table is not None, "結果1のテーブルが見つかりません"
+
+    def set_cell(row, col, new_text):
+        cell = table.cell(row, col)
+        run = cell.text_frame.paragraphs[0].runs[0]
+        old_text = run.text
+        run.text = new_text
+        return old_text
+
+    changes = [
+        (4, 1, "24.4 ± 2.1"),   # MMSE合計点
+        (6, 1, "20.6 ± 3.0"),   # MoCA-J合計点
+        (7, 1, "56 (84.8%)"),   # Global CDR = 0.5
+        (9, 1, "2.1 ± 1.0"),    # CDR-SB
+    ]
+    for row, col, new_text in changes:
+        old = set_cell(row, col, new_text)
+        print(f"結果1 表 行{row}列{col}: 「{old}」→「{new_text}」")
+
+    # 脚注テキストボックス（Text 6）に欠測・Global CDR内訳の注記を追記
+    for shape in slide1.shapes:
+        if shape.has_text_frame and "数値は平均値" in shape.text_frame.text:
+            tf = shape.text_frame
+            p = tf.add_paragraph()
+            p.line_spacing = 1.05
+            run = p.add_run()
+            run.text = ("MoCA-J（n=58）・CDR-SB／Global CDR（n=63）は原資料でCDR評価が未確認の症例を"
+                       "除いて算出。Global CDR評価済み63例の内訳はCDR=0.5が56例(88.9%)、"
+                       "CDR=1.0が6例(9.5%)、CDR=0.0が1例(1.6%)。年齢・性別・HDS-R合計点は"
+                       "本データ（xlsx）に該当項目がないため今回の照合対象外。")
+            base_run = tf.paragraphs[0].runs[0]
+            run.font.size = base_run.font.size
+            run.font.name = base_run.font.name
+            run.font.color.rgb = base_run.font.color.rgb
+            break
+    return table
+
+
 def fix_kekka5_errorbars(prs):
     """結果5チャート（chart1.xml、元ファイルから無改変で持ち込んでいる唯一のグラフ）の
     誤差棒（95%CI）を、現在のxlsxデータから再計算した正しい値に修正する。
@@ -315,6 +394,7 @@ def fix_kekka5_errorbars(prs):
 prs = Presentation(SRC)
 n_orig = len(prs.slides)
 assert n_orig == 2, f"元ファイルのスライド数が想定外です: {n_orig}"
+fix_kekka1_table(prs)
 fix_kekka5_errorbars(prs)
 
 # ============================== 結果2（応用Ver） ==============================
