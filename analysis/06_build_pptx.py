@@ -245,6 +245,90 @@ Mann-Whitney p=0.034は名目上0.05を下回るが、①図を見てから事�
     return slide
 
 
+def build_n29_background_slide(prs):
+    """結果1（N=66）に続く『18か月観察例（N=29＝訴えあり9＋訴えなし20）の患者背景』表。
+    結果2〜5で比較する2群の背景がベースライン時点で均衡しているかを示す。
+
+    値の出典：
+    - 年齢・性別・HDS-R合計点（初回）：レカネマブ患者ID一覧.xlsx（結果1の年齢・性別・
+      HDS-Rも本ファイルで照合済み・完全一致）
+    - MMSE合計点・MoCA-J合計点・Global CDR・CDR-SB：xlsx（0か月＝ベースライン値）
+    - 易怒性・意欲低下：xlsx「精神症状」シート（全体を通じた記載の有無）
+    群間のp値はいずれも探索的な参考値（多重比較未補正）であり、確証的な検定ではない。
+    連続変数はWelchのt検定、二値変数はFisher正確検定。Global CDRの内訳は該当例数が
+    少なく（欠測2例含め評価済み27例）、群間の形式的な検定は行っていない。
+    """
+    slide = prs.slides.add_slide(prs.slide_layouts[0])
+    add_textbox(slide, TITLE, [[("結果1-2", 40, False), ("　患者背景（18か月観察例 N=29）", 26, False)]], 40, BLACK)
+    ln = slide.shapes.add_connector(1, Emu(LINE[0]), Emu(LINE[1]),
+                                    Emu(LINE[0] + LINE[2]), Emu(LINE[1]))
+    ln.line.color.rgb = ACCENT; ln.line.width = Emu(22225)
+    add_textbox(slide, SUB,
+               ["この図の役割：結果2〜5で比較する2群（改善訴えあり n=9／なし n=20）の背景がベースライン時点で均衡していることを示す。"],
+               13, GREY)
+    add_badge(slide, "背景特性に有意差なし（全項目 p > 0.05、探索的）",
+             "MMSE合計点のみ p = 0.086 とやや低いが有意水準には達しない（訴えあり群のほうがベースラインが低い傾向。結果3の留保点と同一）。",
+             NOTSIG_FILL, NOTSIG_BORDER, NOTSIG_TEXT)
+    body_rect = BODY_WITH_BADGE
+
+    rows_data = [
+        ("年齢（歳）",              "75.4 ± 5.2",  "75.2 ± 4.1",  "75.5 ± 5.7",  "p = 0.883"),
+        ("女性",                   "21 (72.4%)",  "5 (55.6%)",   "16 (80.0%)",  "p = 0.209"),
+        ("男性",                   "8 (27.6%)",   "4 (44.4%)",   "4 (20.0%)",   "－"),
+        ("MMSE合計点（0か月）",     "23.83 ± 2.05", "22.89 ± 1.76", "24.25 ± 2.07", "p = 0.086"),
+        ("HDS-R合計点（初回）",     "21.52 ± 3.46", "21.22 ± 3.93", "21.65 ± 3.33", "p = 0.781"),
+        ("MoCA-J合計点（0か月）",   "20.07 ± 3.47", "19.00 ± 4.47", "20.58 ± 2.89", "p = 0.354"),
+        ("Global CDR = 0.5（0か月）","26 (96.3%)",  "8 (100%)",    "18 (94.7%)",   "－"),
+        ("Global CDR = 1.0（0か月）","1 (3.7%)",    "0 (0%)",      "1 (5.3%)",     "－"),
+        ("CDR-SB（0か月）",         "2.11 ± 1.02", "2.31 ± 1.07", "2.03 ± 1.02",  "p = 0.531"),
+        ("易怒性",                 "4 (13.8%)",   "2 (22.2%)",   "2 (10.0%)",    "p = 0.568"),
+        ("意欲低下",                "8 (27.6%)",   "3 (33.3%)",   "5 (25.0%)",    "p = 0.675"),
+    ]
+    headers = ["項目", "全体 (N=29)", "訴えあり (n=9)", "訴えなし (n=20)", "p値（参考）"]
+    cols_in = [3.05, 2.55, 2.55, 2.55, 1.60]
+    n_rows = len(rows_data) + 1
+    bx, by, bw, bh = body_rect
+    tbl_w = sum(int(w * 914400) for w in cols_in)
+    tbl_h = min(bh, 350000 * n_rows)
+    gfx = slide.shapes.add_table(n_rows, 5, Emu(bx), Emu(by), Emu(tbl_w), Emu(tbl_h))
+    table = gfx.table
+    table.first_row = False
+    table.horz_banding = False
+    for c, w_in in enumerate(cols_in):
+        table.columns[c].width = Emu(int(w_in * 914400))
+    row_h = tbl_h // n_rows
+    for r in range(n_rows):
+        table.rows[r].height = Emu(row_h)
+
+    for c, h in enumerate(headers):
+        _style_cell(table.cell(0, c), h, size=13, bold=True, color=BLACK, align="c")
+    for r, (label, tot, ari_v, nasi_v, pval) in enumerate(rows_data, start=1):
+        _style_cell(table.cell(r, 0), label, size=12, color=BLACK, align="l")
+        _style_cell(table.cell(r, 1), tot, size=12, color=BLACK, align="c")
+        _style_cell(table.cell(r, 2), ari_v, size=12, color=BLACK, align="c")
+        _style_cell(table.cell(r, 3), nasi_v, size=12, color=BLACK, align="c")
+        _style_cell(table.cell(r, 4), pval, size=12, color=BLACK, align="c")
+
+    add_textbox(slide, CAP,
+               ["数値は平均値±標準偏差または症例数(%)を示す。年齢・性別・HDS-R合計点はレカネマブ患者ID一覧より、他はxlsx（0か月＝ベースライン値）より算出。",
+                "群間のp値は探索的な参考値（多重比較未補正）。連続変数はWelchのt検定、二値変数はFisher正確検定。Global CDRは該当例数が少なく検定していない。",
+                "MoCA-J（n=28、1例欠測：L9）、Global CDR／CDR-SB（評価済みn=27、2例欠測：L8・L19、いずれも原資料でCDR用紙が未確認）。"],
+               10.5, DARK, spacing=1.15)
+    set_notes(slide, """【このスライドの存在理由】
+結果2〜5では「改善訴えあり(n=9)」と「なし(n=20)」を比較する。その解釈の前提として、両群のベースライン背景（年齢・性別・認知機能・精神症状の記載）が大きく偏っていないかを示す必要がある。
+
+【結果】
+年齢・性別・HDS-R・MoCA-J・CDR-SB・易怒性・意欲低下のいずれも、群間差はp>0.3〜0.9の範囲で有意差はない。
+MMSE合計点（0か月）のみp=0.086とやや低く、訴えあり群のほうが平均1.36点低い（22.89 対 24.25）。この差は結果3のスピーカーノートで既に言及している「6か月時点の一時的な上昇が平均への回帰と整合する」という留保の背景でもある。
+
+【値の出典についての補足】
+年齢・性別・HDS-Rはxlsxに該当列がなく、結果1では長らく照合不能だった項目である。「レカネマブ患者ID一覧」を用いて今回初めて照合し、結果1の記載値と完全一致することを確認済み（詳細は output/患者ID一覧_照合チェック.md）。本スライドの値もこの照合済みの出典に基づく。
+
+【注意】
+n=9 対 20 の小標本であり、背景に有意差が出ないことは「群が完全に同質である」ことの証明にはならない（検出力の限界）。あくまで結果2〜5を読む上での参考情報として提示する。""")
+    return slide
+
+
 def fix_kekka1_table(prs):
     """結果1（患者背景表、slide1のネイティブテーブル）の数値を、xlsxから独立に
     再計算した値と照合し、矛盾していたセルのみを修正する。
@@ -560,13 +644,14 @@ set_notes(s, """タスク④に対応。文献調査_意欲低下定義.md の�
 「易怒性／意欲低下のどちらかを解析から減らすべきか」という論点については、指示書の方針に従い削除は実行していない。確認事項リストに論点として記載した。""")
 
 build_summary_slide(prs)
+build_n29_background_slide(prs)
 
 # ---- スライド順序の並べ替え ----
-# 作成順： [結果1, 結果5, 結果2, 結果3, 結果4, 参考1, 参考2, 参考3, 統計まとめ]
-# 最終順： 結果1 → 結果2/3/4（新規） → 結果5 → 統計まとめ（新規） → 参考1/2/3
+# 作成順： [結果1, 結果5, 結果2, 結果3, 結果4, 参考1, 参考2, 参考3, 統計まとめ, 結果1-2(N29背景)]
+# 最終順： 結果1 → 結果1-2（新規）→ 結果2/3/4（新規） → 結果5 → 統計まとめ（新規） → 参考1/2/3
 sldIdLst = prs.slides._sldIdLst
 ids = list(sldIdLst)
-order = [0, 2, 3, 4, 1, 8, 5, 6, 7]
+order = [0, 9, 2, 3, 4, 1, 8, 5, 6, 7]
 for i in ids:
     sldIdLst.remove(i)
 for k in order:
