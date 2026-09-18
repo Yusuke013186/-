@@ -1,4 +1,2 @@
-# 患者レベルのデータは公開リポジトリに含めない
-data_local/
-output/
-docs/
+__pycache__/
+*.pyc
