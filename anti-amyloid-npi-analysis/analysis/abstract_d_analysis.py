@@ -33,7 +33,26 @@ from deep_analysis import (                                   # noqa: E402
     outcome_meta, median,
 )
 
-OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "output")
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT = os.path.join(ROOT, "output")
+BG_PATH = os.path.join(ROOT, "data_local", "patient_background.csv")
+
+
+def load_background() -> dict[str, dict]:
+    """連結不可能化した患者背景（研究番号・年齢・性別・投与開始日）を読み込む。
+    analysis/extract_background.py が生成する。"""
+    if not os.path.exists(BG_PATH):
+        return {}
+    out = {}
+    with io.open(BG_PATH, encoding="utf-8-sig") as f:
+        for r in csv.DictReader(f):
+            age = r["年齢"].strip()
+            out[r["研究番号"].strip()] = {
+                "年齢": float(age) if age else None,
+                "性別": r["性別"].strip() or None,
+                "投与開始日": (dt.date.fromisoformat(r["投与開始日"].strip())
+                          if r["投与開始日"].strip() else None)}
+    return out
 
 
 def ms(vals: list[float], nd: int = 1) -> str:
@@ -61,6 +80,19 @@ def fp3(p: Optional[float]) -> str:
 
 def main() -> None:
     subs = build_subjects()
+    BG = load_background()
+
+    def age(x):
+        return BG.get(x.pid, {}).get("年齢")
+
+    def female(x):
+        return BG.get(x.pid, {}).get("性別") == "女性"
+
+    def sex_known(x):
+        return BG.get(x.pid, {}).get("性別") is not None
+
+    def start(x):
+        return BG.get(x.pid, {}).get("投与開始日")
 
     # --- 対象集団: NPIが対で評価でき、かつ認知機能の追跡もある症例
     npi_paired = [x for x in subs if x.npi_paired
@@ -115,6 +147,44 @@ def main() -> None:
     ia = [x.interval_m for x in imp if x.interval_m is not None]
     ib = [x.interval_m for x in non if x.interval_m is not None]
     A(f"  - 改善群 {ms(ia)}か月 / 非改善群 {ms(ib)}か月（{fp(mw(ia, ib))}）")
+    mo = {"6か月": 6, "12か月": 12, "18か月": 18, "24か月": 24}
+    ta = [mo[bl_fu(x.mmse, "__total__")[1].label] for x in imp]
+    tb = [mo[bl_fu(x.mmse, "__total__")[1].label] for x in non]
+    A(f"- 最終評価の時点（ラベル）: 改善群 {ms(ta)}か月"
+      f"（{'、'.join(f'{v}か月' for v in ta)}）/ 非改善群 {ms(tb)}か月"
+      f"（{fp(mw(ta, tb))}）")
+    st_all = [start(x) for x in subs if start(x)]
+    st_lec = [start(x) for x in subs if x.drug == "レカネマブ" and start(x)]
+    if st_lec:
+        A(f"- レカネマブ全66例の投与開始日: {min(st_lec)} 〜 {max(st_lec)}"
+          f"（{len(st_lec)}例で記載あり）")
+    dmb = [bl_fu(x.mmse, "__total__")[0].date for x in subs
+           if x.drug == "ドナネマブ" and bl_fu(x.mmse, "__total__")[0]
+           and bl_fu(x.mmse, "__total__")[0].date]
+    if dmb:
+        A(f"- ドナネマブは投与開始日の記載がなく、MMSEベースライン評価日の範囲は "
+          f"{min(dmb)} 〜 {max(dmb)}（{len(dmb)}例）")
+    st_pop = [start(x) for x in pop if start(x)]
+    if st_pop:
+        A(f"- 解析対象14例の投与開始日: {min(st_pop)} 〜 {max(st_pop)}")
+        sa = [start(x) for x in imp if start(x)]
+        A(f"  - 改善群: {'、'.join(str(v) for v in sa)}")
+
+    # --- 全コホートの背景（抄録の冒頭記載用）
+    A("\n## 2-B. 全コホートの患者背景（参考）\n")
+    la = [age(x) for x in subs if x.drug == "レカネマブ" and age(x) is not None]
+    lf = [x for x in subs if x.drug == "レカネマブ" and sex_known(x)]
+    df = [x for x in subs if x.drug == "ドナネマブ" and sex_known(x)]
+    A(f"- レカネマブ66例: 年齢 {ms(la)}歳（n={len(la)}）、"
+      f"女性 {sum(1 for x in lf if female(x))}/{len(lf)}例"
+      f"（{sum(1 for x in lf if female(x))/len(lf)*100:.1f}％）")
+    A(f"- ドナネマブ30例: **年齢の記載が元表にないため算出不能**、"
+      f"女性 {sum(1 for x in df if female(x))}/{len(df)}例"
+      f"（{sum(1 for x in df if female(x))/len(df)*100:.1f}％）")
+    pa = [age(x) for x in pop if age(x) is not None]
+    pf = [x for x in pop if sex_known(x)]
+    A(f"- 解析対象14例: 年齢 {ms(pa)}歳、女性 {sum(1 for x in pf if female(x))}/{len(pf)}例"
+      f"（{sum(1 for x in pf if female(x))/len(pf)*100:.1f}％）")
 
     # --- 患者背景と認知機能の比較
     def get_bl(x, ok):
@@ -126,6 +196,7 @@ def main() -> None:
         return None if b is None or d is None else b + d
 
     ROWS = [
+        ("患者背景", "年齢（歳）", age, 1),
         ("患者背景", "ベースライン MMSE合計（点）", lambda x: get_bl(x, "ΔMMSE合計"), 1),
         ("患者背景", "ベースライン CDR-SB（点）", lambda x: get_bl(x, "ΔCDR-SB"), 1),
         ("患者背景", "ベースライン Global CDR", lambda x: get_bl(x, "ΔGlobalCDR"), 2),
@@ -181,6 +252,7 @@ def main() -> None:
     A("|---|---|---|---|")
     rate_rows = []
     for name, fn in [
+            ("女性", female),
             ("ベースラインで易怒性あり", lambda x: x.ir_bl == 1),
             ("追跡時に易怒性あり", lambda x: x.ir_fu == 1),
             ("易怒性が新規出現（なし→あり）",
@@ -210,6 +282,12 @@ def main() -> None:
     A("|---|" + "---|" * len(imp))
     yn = {1: "あり", 0: "なし", None: "－"}
     A("| 薬剤 | " + " | ".join(x.drug for x in imp) + " |")
+    A("| 年齢 | " + " | ".join(
+        f"{age(x):.0f}歳" if age(x) is not None else "－" for x in imp) + " |")
+    A("| 性別 | " + " | ".join(
+        BG.get(x.pid, {}).get("性別") or "－" for x in imp) + " |")
+    A("| 投与開始日 | " + " | ".join(
+        str(start(x)) if start(x) else "－" for x in imp) + " |")
     A("| 観察期間 | " + " | ".join(
         f"{x.interval_m:g}か月" if x.interval_m is not None else "不明"
         for x in imp) + " |")
