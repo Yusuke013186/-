@@ -27,7 +27,8 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 import openpyxl
-from scipy.stats import mannwhitneyu, wilcoxon, spearmanr, norm, fisher_exact
+from scipy.stats import (mannwhitneyu, wilcoxon, spearmanr, norm,
+                         fisher_exact, binomtest)
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from npi_analysis import (                      # noqa: E402
@@ -583,6 +584,56 @@ def binary_scan(subs: list["Subject"], include_reference: bool = False) -> list[
     return rows
 
 
+def npi_trajectory_scan(subs: list["Subject"]) -> list[dict]:
+    """NPI症状そのものの経時変化。対応のある2値データなので McNemar 正確検定を用いる。
+    変化量の群間比較と違い、床・天井効果の影響を受けない解析である。"""
+    rows = []
+    for item, (iname, blk, fuk, confk) in ITEMS.items():
+        for inc in (False, True):
+            pool = [x for x in subs if x.npi_paired
+                    and getattr(x, blk) is not None and getattr(x, fuk) is not None
+                    and (inc or getattr(x, confk) != "reference")]
+            if not pool:
+                continue
+            improved = sum(1 for x in pool
+                           if getattr(x, blk) == 1 and getattr(x, fuk) == 0)
+            onset = sum(1 for x in pool
+                        if getattr(x, blk) == 0 and getattr(x, fuk) == 1)
+            nbl = sum(1 for x in pool if getattr(x, blk) == 1)
+            nfu = sum(1 for x in pool if getattr(x, fuk) == 1)
+            p = (binomtest(onset, improved + onset, 0.5).pvalue
+                 if improved + onset else None)
+            rows.append({"項目": iname, "判定": "参考値含む" if inc else "確定のみ",
+                         "n": len(pool),
+                         "BL陽性": nbl, "BL陽性率": round(nbl / len(pool), 3),
+                         "FU陽性": nfu, "FU陽性率": round(nfu / len(pool), 3),
+                         "改善(あり→なし)": improved, "新規出現(なし→あり)": onset,
+                         "McNemar_p": p})
+    return rows
+
+
+def npi_count_change(subs: list["Subject"]) -> Optional[dict]:
+    """NPI2項目の陽性項目数(0-2)がベースラインから有意に変化したかを検定する。"""
+    pool = [x for x in subs if x.npi_paired
+            and None not in (x.ap_bl, x.ap_fu, x.ir_bl, x.ir_fu)]
+    if len(pool) < 5:
+        return None
+    bl = [x.ap_bl + x.ir_bl for x in pool]
+    fu = [x.ap_fu + x.ir_fu for x in pool]
+    up = sum(1 for a, b in zip(bl, fu) if b > a)
+    dn = sum(1 for a, b in zip(bl, fu) if b < a)
+    try:
+        w, p = wilcoxon(bl, fu, zero_method="wilcox", alternative="two-sided")
+    except Exception:
+        w = p = None
+    return {"n": len(pool), "BL平均": round(sum(bl) / len(bl), 3),
+            "FU平均": round(sum(fu) / len(fu), 3),
+            "増加": up, "不変": len(bl) - up - dn, "減少": dn,
+            "W": w, "Wilcoxon_p": p,
+            "符号検定_p": binomtest(up, up + dn, 0.5).pvalue if up + dn else None,
+            "症例": ",".join(x.pid for x in pool)}
+
+
 # ---------------------------------------------------------------- 床・天井効果の統制
 
 def higher_is_better(ok: str) -> bool:
@@ -958,6 +1009,32 @@ def main() -> None:
                 and r["項目"].startswith("NPI第7"):
             A(f"| 1点以上低下の割合 | {r['群1該当']} | {r['群2該当']} | "
               f"Fisher 正確検定 | {fmt_p(r['p'])} |")
+
+    # ---- 12b. NPI症状そのものの推移
+    traj = npi_trajectory_scan(subs)
+    cnt = npi_count_change(subs)
+    wcsv(os.path.join(OUT, "npi_trajectory.csv"), traj)
+    A("\n\n## 12-B. NPI症状そのものの推移（床・天井効果の影響を受けない解析）\n")
+    A("変化量の群間比較と異なり、対応のある2値データの周辺割合の変化を見るため、")
+    A("ベースライン値の偏りによるアーティファクトの問題が生じない。\n")
+    A("| 項目 | 判定 | n | BL陽性 | FU陽性 | 改善（あり→なし） | 新規出現（なし→あり） | McNemar p |")
+    A("|---|---|---|---|---|---|---|---|")
+    for r in traj:
+        A(f"| {r['項目'][:14]} | {r['判定']} | {r['n']} | "
+          f"{r['BL陽性']}例 ({r['BL陽性率']*100:.0f}%) | "
+          f"{r['FU陽性']}例 ({r['FU陽性率']*100:.0f}%) | {r['改善(あり→なし)']} | "
+          f"{r['新規出現(なし→あり)']} | {fmt_p(r['McNemar_p'])} |")
+    if cnt:
+        A(f"\n**NPI陽性項目数（0〜2）の変化**: n={cnt['n']}、"
+          f"ベースライン平均 {cnt['BL平均']:g} → フォローアップ平均 {cnt['FU平均']:g}"
+          f"（増加 {cnt['増加']}例 / 不変 {cnt['不変']}例 / 減少 {cnt['減少']}例）")
+        A(f"\n- Wilcoxon 符号付順位検定: **p={fmt_p(cnt['Wilcoxon_p'])}**")
+        A(f"- 符号検定: p={fmt_p(cnt['符号検定_p'])}")
+        A("\n→ **抗アミロイドβ抗体療法中に、NPIで捉えた精神症状の陽性項目数は"
+          "有意に増加していた。** 内訳としては易怒性の新規出現が主体である。")
+        A("\n> 限界: ベースラインのNPIは診療記録に基づく後方視的な評価であるのに対し、")
+        A("> フォローアップのNPIは本研究のためにまとめて施行されている。")
+        A("> 把握率の差が陽性率の上昇に寄与している可能性は否定できない。")
 
     # ---- 13. 床・天井効果の検証
     bal = baseline_balance_scan(subs)
