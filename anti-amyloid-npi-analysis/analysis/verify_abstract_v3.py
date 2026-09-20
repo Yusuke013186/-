@@ -16,8 +16,9 @@ from exhaustive_search import obs_months
 from decline_group_analysis import group_of, ms
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DOC = os.path.join(ROOT, "abstract_v3",
-                   "抄録_NPI-Apathyscore低下例の認知機能推移.md")
+DOCS = [os.path.join(ROOT, "abstract_v3", n) for n in (
+    "抄録_NPI-Apathyscore低下例の認知機能推移.md",
+    "抄録_NPI-Apathyscore低下例の認知機能推移_短縮版.md")]
 
 
 def main() -> None:
@@ -26,7 +27,7 @@ def main() -> None:
     inc = [c for c in cases if c.step == "S5_解析対象"]
     dec = [c for c in inc if group_of(c) == "低下例"]
     non = [c for c in inc if group_of(c) == "非低下例"]
-    txt = io.open(DOC, encoding="utf-8").read()
+    texts = {p: io.open(p, encoding="utf-8").read() for p in DOCS}
 
     def g(c, sh, key, w):
         b, f = c.bl_fu(sh, key)
@@ -116,35 +117,63 @@ def main() -> None:
         print(f"  {lab}: {val}")
 
     # 抄録本文に書かれている数値が実際に出現するか
-    need = [
-        "14例", "2例（14.3％）", "12例（85.7％）", "0点10例", "1点1例", "2点1例",
-        "78.0±4.2", "74.8±4.6", "2/2例", "7/12例",
-        "22.5±0.7", "24.9±2.0", "1.8±0.4", "1.5±0.7",
-        "2.0±0.0", "4.2±1.0", "＋1.5±2.1", "−0.5±1.9",
-        "＋1.0±1.4", "＋0.9±0.8", "＋1.5±0.7", "−0.8±0.8",
+    common = [
+        "2/14例（14.3％）", "12/14例（85.7％", "初回0点10例",
+        "74.8±4.6", "女性58％", "78.0±4.2",
+        "24.9±2.0", "1.5±0.7", "4.2±1.0",
+        "22.5±0.7", "1.8±0.4", "2.0±0.0",
+        "−0.5±1.9", "＋0.9±0.8", "−0.8±0.8",
+        "＋1.5±2.1", "＋1.0±1.4", "＋1.5±0.7",
         "低下例2/2例", "非低下例0/12例",
-        "75歳女性", "23→23点", "2.0→4.0点", "時間見当識2→3", "注意計算5→3",
+        "（75歳）", "23→23点", "2.0→4.0点", "時間見当識2→3", "注意計算5→3",
         "図形模写0→1",
-        "81歳女性", "22→25点", "1.5→1.5点", "時間見当識2→4", "場所見当識4→5",
-        "注意計算3→4", "遅延再生1→0",
-        "6か月4例", "12か月3例", "18か月4例", "24か月1例",
+        "（81歳）", "22→25点", "1.5→1.5点", "時間見当識2→4", "場所見当識4→5",
+        "注意計算3→4", "遅延再生1→0", "6領域とも不変",
+        "（6〜24か月）",
     ]
-    miss = [x for x in need if x not in txt]
-    print("\n=== 抄録本文に含まれるべき表記の確認 ===")
-    print(f"  確認項目 {len(need)}件 / 見当たらない {len(miss)}件")
-    for x in miss:
-        print(f"  ✗ {x}")
+    # L4のCDRは4領域が各0.5点悪化しているか（短縮版の表現の裏づけ）
+    l4 = [c for c in dec if c.pid == "L4"][0]
+    d4 = [(k, *l4.bl_fu("CDR", k)) for k in CDR_DOM]
+    n4 = [k for k, b, f in d4 if f - b == 0.5]
+    chk("L4 CDRで+0.5点となった領域数", f"{len(n4)}領域（{'、'.join(n4)}）")
+    chk("L4 それ以外の領域に変化なし",
+        all(f == b for k, b, f in d4 if k not in n4))
 
-    # 本文に現れる「a→b」の下位項目記載が、合計点の変化と整合するか
-    print("\n=== 抄録本文の下位項目記載が合計点変化と一致するか ===")
-    for pid, pat in (("1例目", r"MMSE (\d+)→(\d+)点（([^）]+)）"),):
-        for m in re.finditer(pat, txt):
+    print("=== 抄録の数値と解析結果の突き合わせ ===")
+    for lab, val in checks:
+        print(f"  {lab}: {val}")
+
+    ng = 0
+    for path, txt in texts.items():
+        name = os.path.basename(path)
+        miss = [x for x in common if x not in txt]
+        print(f"\n=== {name} ===")
+        print(f"  確認項目 {len(common)}件 / 見当たらない {len(miss)}件")
+        for x in miss:
+            print(f"  ✗ {x}")
+        ng += len(miss)
+        # 本文の下位項目記載が合計点変化と一致するか
+        for m in re.finditer(r"MMSE (\d+)→(\d+)点（([^）]+)）", txt):
             b, f = int(m.group(1)), int(m.group(2))
             items = re.findall(r"(\d+)→(\d+)", m.group(3))
-            s = sum(int(y) - int(x) for x, y in items)
-            ok = "一致" if s == f - b else "**不一致**"
-            print(f"  MMSE {b}→{f}（Δ{f - b:+d}）: "
-                  f"記載された下位項目Δの総和 {s:+d} → {ok}")
+            t = sum(int(y) - int(x) for x, y in items)
+            ok = t == f - b
+            ng += 0 if ok else 1
+            print(f"  MMSE {b}→{f}（Δ{f - b:+d}）: 記載下位項目Δの総和 {t:+d} → "
+                  f"{'一致' if ok else '**不一致**'}")
+        # 評価時点の範囲が両群とも 6〜24か月であること
+        labs = {c.followup_visit("MMSE").label for c in inc}
+        rng = sorted(labs, key=lambda x: int(x.replace("か月", "")))
+        okr = rng[0] == "6か月" and rng[-1] == "24か月"
+        ng += 0 if okr else 1
+        print(f"  評価時点の範囲 {rng[0]}〜{rng[-1]} と本文の（6〜24か月）: "
+              f"{'一致' if okr else '**不一致**'}")
+        for lab, g in (("低下例", dec), ("非低下例", non)):
+            gl = sorted({c.followup_visit("MMSE").label for c in g},
+                        key=lambda x: int(x.replace("か月", "")))
+            print(f"    {lab}の実際の評価時点: {gl[0]}〜{gl[-1]}（{'、'.join(gl)}）")
+
+    print(f"\n不一致 合計 {ng}件")
 
 
 if __name__ == "__main__":
